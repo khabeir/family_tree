@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../data/models/person.dart';
 import '../domain/family_service.dart';
-import 'date_field.dart';
 import 'person_picker_screen.dart';
 import 'ui_helpers.dart';
 
@@ -32,8 +31,6 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
   late Gender _gender;
   int? _fatherId;
   int? _motherId;
-  String? _birth;
-  String? _death;
   bool _saving = false;
 
   @override
@@ -45,8 +42,6 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
     _gender = p?.gender ?? Gender.unknown;
     _fatherId = p?.fatherId ?? widget.presetFatherId;
     _motherId = p?.motherId ?? widget.presetMotherId;
-    _birth = p?.birthDate;
-    _death = p?.deathDate;
   }
 
   @override
@@ -94,8 +89,8 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
       gender: _gender,
       fatherId: _fatherId,
       motherId: _motherId,
-      birthDate: _birth,
-      deathDate: _death,
+      birthDate: base?.birthDate,
+      deathDate: base?.deathDate,
       notes: _notes.text,
       createdAt: base?.createdAt,
     );
@@ -124,7 +119,8 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
       margin: EdgeInsets.zero,
       child: ListTile(
         title: Text(label),
-        subtitle: Text(person?.name ?? 'غير محدد'),
+        subtitle:
+            Text(person == null ? 'غير محدد' : widget.state.displayName(person)),
         trailing: person == null
             ? const Icon(Icons.chevron_left)
             : IconButton(icon: const Icon(Icons.clear), onPressed: onClear),
@@ -136,6 +132,8 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.person != null;
+    final preview = widget.state
+        .composeName(_name.text, _fatherId, selfId: widget.person?.id);
     return Scaffold(
       appBar: AppBar(title: Text(isEdit ? 'تعديل شخص' : 'إضافة شخص')),
       body: Form(
@@ -145,13 +143,23 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
           children: [
             TextFormField(
               controller: _name,
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                labelText: 'الاسم الكامل',
+                labelText: 'الاسم الأول',
+                helperText: 'اكتب الاسم الأول فقط، وتُضاف أسماء الآباء تلقائياً',
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'الاسم مطلوب' : null,
             ),
+            if (_name.text.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'سيظهر باسم: $preview',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
             const SizedBox(height: 16),
             SegmentedButton<Gender>(
               segments: const [
@@ -175,18 +183,6 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
               person: widget.state.byId(_motherId),
               onPick: _pickMother,
               onClear: () => setState(() => _motherId = null),
-            ),
-            const SizedBox(height: 16),
-            DateField(
-              label: 'تاريخ الميلاد',
-              value: _birth,
-              onChanged: (v) => setState(() => _birth = v),
-            ),
-            const SizedBox(height: 16),
-            DateField(
-              label: 'تاريخ الوفاة',
-              value: _death,
-              onChanged: (v) => setState(() => _death = v),
             ),
             const SizedBox(height: 16),
             TextFormField(

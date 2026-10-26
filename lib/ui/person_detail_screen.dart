@@ -36,7 +36,7 @@ class PersonDetailScreen extends StatelessWidget {
   Future<void> _delete(BuildContext context, Person p) async {
     final ok = await confirmDialog(
       context,
-      title: 'حذف ${p.name}؟',
+      title: 'حذف ${state.displayName(p)}؟',
       message: 'سيُحذف الشخص وعلاقات زواجه، وسيُفرَّغ حقل الأب/الأم عند أبنائه. '
           'لا يمكن التراجع.',
       confirmLabel: 'حذف',
@@ -118,7 +118,7 @@ class PersonDetailScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(p.name),
+            title: Text(state.displayName(p)),
             actions: [
               IconButton(
                 tooltip: 'تعديل',
@@ -138,16 +138,6 @@ class PersonDetailScreen extends StatelessWidget {
                 leading: Icon(genderIcon(p.gender)),
                 title: Text(genderLabel(p.gender)),
               ),
-              if (p.birthDate != null)
-                ListTile(
-                  leading: const Icon(Icons.cake),
-                  title: Text('الميلاد: ${p.birthDate}'),
-                ),
-              if (p.deathDate != null)
-                ListTile(
-                  leading: const Icon(Icons.event),
-                  title: Text('الوفاة: ${p.deathDate}'),
-                ),
               if (p.notes != null)
                 ListTile(
                   leading: const Icon(Icons.notes),
@@ -158,13 +148,13 @@ class PersonDetailScreen extends StatelessWidget {
                 const ListTile(title: Text('غير مسجلين')),
               if (father != null)
                 ListTile(
-                  title: Text('الأب: ${father.name}'),
+                  title: Text('الأب: ${state.displayName(father)}'),
                   trailing: const Icon(Icons.chevron_left),
                   onTap: () => _open(context, father.id!),
                 ),
               if (mother != null)
                 ListTile(
-                  title: Text('الأم: ${mother.name}'),
+                  title: Text('الأم: ${state.displayName(mother)}'),
                   trailing: const Icon(Icons.chevron_left),
                   onTap: () => _open(context, mother.id!),
                 ),
@@ -187,8 +177,7 @@ class PersonDetailScreen extends StatelessWidget {
                   }
                   return Column(
                     children: [
-                      for (final m in list)
-                        _marriageTile(context, p, m),
+                      for (final m in list) _marriageTile(context, p, m),
                     ],
                   );
                 },
@@ -207,8 +196,7 @@ class PersonDetailScreen extends StatelessWidget {
               for (final c in children)
                 ListTile(
                   leading: Icon(genderIcon(c.gender)),
-                  title: Text(c.name),
-                  subtitle: c.birthDate == null ? null : Text(c.birthDate!),
+                  title: Text(state.displayName(c)),
                   trailing: const Icon(Icons.chevron_left),
                   onTap: () => _open(context, c.id!),
                 ),
@@ -229,7 +217,7 @@ class PersonDetailScreen extends StatelessWidget {
     ].join(' ');
     return ListTile(
       leading: const Icon(Icons.favorite),
-      title: Text(other?.name ?? 'غير معروف'),
+      title: Text(other == null ? 'غير معروف' : state.displayName(other)),
       subtitle: Text(
         [marriageStatusLabel(m.status), if (dates.isNotEmpty) dates].join(' • '),
       ),

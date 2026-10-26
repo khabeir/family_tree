@@ -111,7 +111,7 @@ class _MarriageFormScreenState extends State<MarriageFormScreen> {
             margin: EdgeInsets.zero,
             child: ListTile(
               title: const Text('الزوج/الزوجة'),
-              subtitle: Text(spouse?.name ?? 'اضغط للاختيار'),
+              subtitle: Text(spouse == null ? 'اضغط للاختيار' : widget.state.displayName(spouse)),
               trailing: isEdit ? null : const Icon(Icons.chevron_left),
               onTap: isEdit ? null : _pickSpouse,
             ),

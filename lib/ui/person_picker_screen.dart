@@ -59,7 +59,7 @@ class _PersonPickerScreenState extends State<PersonPickerScreen> {
                       final p = items[i];
                       return ListTile(
                         leading: Icon(genderIcon(p.gender)),
-                        title: Text(p.name),
+                        title: Text(widget.state.displayName(p)),
                         subtitle: widget.state.parentsLabel(p) == null
                             ? null
                             : Text(widget.state.parentsLabel(p)!),

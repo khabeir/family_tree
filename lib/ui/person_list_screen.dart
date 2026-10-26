@@ -84,7 +84,7 @@ class _PersonListScreenState extends State<PersonListScreen> {
                     final parents = state.parentsLabel(p);
                     return ListTile(
                       leading: CircleAvatar(child: Icon(genderIcon(p.gender))),
-                      title: Text(p.name),
+                      title: Text(state.displayName(p)),
                       subtitle: parents == null ? null : Text(parents),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
