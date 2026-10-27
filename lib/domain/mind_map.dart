@@ -128,13 +128,35 @@ Set<String> keysUpToDepth(MindNode root, int depth) {
 
 Set<String> allExpandableKeys(MindNode root) => keysUpToDepth(root, 1 << 30);
 
+/// مفاتيح العقد من الجذر حتى عقدة الشخص [personId] (شاملة)، أو null إن لم يكن عقدة في الخريطة.
+List<String>? keyPathToPerson(MindNode root, int personId) {
+  List<String>? walk(MindNode n, List<String> acc) {
+    final next = [...acc, n.key];
+    if (n.kind == MindKind.person && n.person.id == personId) return next;
+    for (final c in n.children) {
+      final r = walk(c, next);
+      if (r != null) return r;
+    }
+    return null;
+  }
+
+  return walk(root, const []);
+}
+
 class MindBox {
-  MindBox(this.node, this.depth);
+  MindBox(this.node, this.depth, this.branch);
 
   final MindNode node;
   final int depth;
+
+  /// رقم الفرع الرئيسي (ترتيب الابن المباشر للجذر)؛ -1 للجذر. يُستخدم للتلوين.
+  final int branch;
+
   double y = 0;
+  double height = 0;
   bool expanded = false;
+
+  double get centerY => y + height / 2;
 }
 
 class MindEdge {
@@ -158,48 +180,61 @@ class MindLayout {
   final double height;
 }
 
-/// تخطيط شجري: الأوراق تُرصّ رأسياً، والأب في منتصف أبنائه، والعمق يحدّد العمود.
+/// تخطيط شجري: الأوراق تُرصّ رأسياً حسب ارتفاع كل عقدة، والأب في منتصف أبنائه،
+/// والعمق يحدّد العمود. [heightOf] يحدّد ارتفاع كل عقدة (وإلا [nodeH] للجميع).
 MindLayout layoutMindMap(
   MindNode root,
   Set<String> expanded, {
   double nodeH = 64,
   double gapY = 12,
+  double Function(MindNode node, int depth)? heightOf,
 }) {
   final boxes = <MindBox>[];
   final edges = <MindEdge>[];
+  final colBottom = <int, double>{};
   var nextY = 0.0;
   var maxDepth = 0;
 
-  double place(MindNode n, int depth, int? parent) {
+  // يعيد مركز العقدة الرأسي
+  double place(MindNode n, int depth, int? parent, int branch) {
     final index = boxes.length;
-    final box = MindBox(n, depth);
+    final h = heightOf?.call(n, depth) ?? nodeH;
+    final box = MindBox(n, depth, branch)..height = h;
     boxes.add(box);
     if (parent != null) edges.add(MindEdge(parent, index));
     maxDepth = math.max(maxDepth, depth);
 
     final open = n.children.isNotEmpty && expanded.contains(n.key);
     box.expanded = open;
+    final floor = colBottom[depth] ?? 0.0;
+
     if (!open) {
-      box.y = nextY;
-      nextY += nodeH + gapY;
+      final top = math.max(nextY, floor);
+      box.y = top;
+      nextY = top + h + gapY;
     } else {
       var first = 0.0;
       var last = 0.0;
       for (var i = 0; i < n.children.length; i++) {
-        final y = place(n.children[i], depth + 1, index);
-        if (i == 0) first = y;
-        last = y;
+        final c = place(n.children[i], depth + 1, index, depth == 0 ? i : branch);
+        if (i == 0) first = c;
+        last = c;
       }
-      box.y = (first + last) / 2;
+      box.y = math.max((first + last) / 2 - h / 2, floor);
     }
-    return box.y;
+    colBottom[depth] = box.y + h + gapY;
+    return box.centerY;
   }
 
-  place(root, 0, null);
+  place(root, 0, null, -1);
+  var bottom = 0.0;
+  for (final b in boxes) {
+    bottom = math.max(bottom, b.y + b.height);
+  }
   return MindLayout(
     boxes: boxes,
     edges: edges,
     maxDepth: maxDepth,
-    height: math.max(nextY - gapY, nodeH),
+    height: math.max(bottom, 1),
   );
 }
