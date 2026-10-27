@@ -4,6 +4,7 @@ import '../app_state.dart';
 import 'person_detail_screen.dart';
 import 'person_form_screen.dart';
 import 'backup_screen.dart';
+import 'import_screen.dart';
 import 'ui_helpers.dart';
 
 class PersonListScreen extends StatefulWidget {
@@ -39,6 +40,13 @@ class _PersonListScreenState extends State<PersonListScreen> {
     return Scaffold(
       appBar: AppBar(
         actions: [
+          IconButton(
+            tooltip: 'استيراد Excel / CSV',
+            icon: const Icon(Icons.table_chart),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ImportScreen(state: state)),
+            ),
+          ),
           IconButton(
             tooltip: 'النسخ الاحتياطي والبيانات',
             icon: const Icon(Icons.save_alt),
