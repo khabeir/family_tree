@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import 'mind_map_screen.dart';
 import 'person_list_screen.dart';
 import 'tree_screen.dart';
 
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           PersonListScreen(state: widget.state),
           TreeScreen(state: widget.state),
+          MindMapScreen(state: widget.state),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -32,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.people), label: 'الأفراد'),
           NavigationDestination(icon: Icon(Icons.account_tree), label: 'الشجرة'),
+          NavigationDestination(icon: Icon(Icons.hub), label: 'الخريطة'),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import '../app_state.dart';
 import '../data/models/marriage.dart';
 import '../data/models/person.dart';
 import 'marriage_form_screen.dart';
+import 'mind_map_screen.dart';
 import 'person_form_screen.dart';
 import 'ui_helpers.dart';
 
@@ -120,6 +121,16 @@ class PersonDetailScreen extends StatelessWidget {
           appBar: AppBar(
             title: Text(state.displayName(p)),
             actions: [
+              IconButton(
+                tooltip: 'خريطة ذهنية',
+                icon: const Icon(Icons.hub),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        MindMapScreen(state: state, initialRootId: personId),
+                  ),
+                ),
+              ),
               IconButton(
                 tooltip: 'تعديل',
                 icon: const Icon(Icons.edit),

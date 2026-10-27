@@ -28,6 +28,9 @@ class AppState extends ChangeNotifier {
   List<Person> _all = const [];
   Map<int, Person> _byId = const {};
   Map<int, String> _display = const {};
+  List<Marriage> _marriages = const [];
+
+  List<Marriage> get allMarriages => _marriages;
 
   List<Person> get all => _all;
 
@@ -52,6 +55,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> load() async {
     final rows = await persons.getAll();
+    _marriages = await marriages.getAll();
     _byId = {for (final p in rows) p.id!: p};
     _display = {
       for (final p in rows) p.id!: composeName(p.name, p.fatherId, selfId: p.id),
@@ -122,18 +126,21 @@ class AppState extends ChangeNotifier {
 
   Future<int> addMarriage(Marriage m) async {
     final id = await service.addMarriage(m);
+    _marriages = await marriages.getAll();
     notifyListeners();
     return id;
   }
 
   Future<bool> updateMarriage(Marriage m) async {
     final ok = await service.updateMarriage(m);
+    _marriages = await marriages.getAll();
     notifyListeners();
     return ok;
   }
 
   Future<bool> deleteMarriage(int id) async {
     final ok = await service.deleteMarriage(id);
+    _marriages = await marriages.getAll();
     notifyListeners();
     return ok;
   }
