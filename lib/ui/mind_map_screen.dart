@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -55,10 +58,24 @@ class _NodeStyle {
 }
 
 class MindMapScreen extends StatefulWidget {
-  const MindMapScreen({super.key, required this.state, this.initialRootId});
+  const MindMapScreen({
+    super.key,
+    required this.state,
+    this.initialRootId,
+    this.fullscreen = false,
+    this.initialExpanded,
+    this.initialRootOnRight = false,
+    this.initialFullNames = false,
+  });
 
   final AppState state;
   final int? initialRootId;
+
+  /// وضع ملء الشاشة: بلا شريط علوي ولا أشرطة النظام، مع تدوير للعرض الأفقي.
+  final bool fullscreen;
+  final Set<String>? initialExpanded;
+  final bool initialRootOnRight;
+  final bool initialFullNames;
 
   @override
   State<MindMapScreen> createState() => _MindMapScreenState();
@@ -77,24 +94,73 @@ class _MindMapScreenState extends State<MindMapScreen> {
   final Map<String, Size> _measureCache = {};
 
   int? _rootId;
+  int? _currentRootId;
   int? _initializedFor;
   Set<String> _expanded = {};
   bool _rootOnRight = false;
   bool _fullNames = false;
+  bool _landscape = true;
   String? _highlightKey;
   String? _focusKey;
+  Size? _lastViewport;
   _ViewRequest _view = _ViewRequest.reset;
 
   @override
   void initState() {
     super.initState();
     _rootId = widget.initialRootId;
+    _rootOnRight = widget.initialRootOnRight;
+    _fullNames = widget.initialFullNames;
+    final initial = widget.initialExpanded;
+    if (initial != null && widget.initialRootId != null) {
+      _expanded = {...initial};
+      _initializedFor = widget.initialRootId;
+    }
+    if (widget.fullscreen) {
+      _applyOrientation();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
   }
 
   @override
   void dispose() {
+    if (widget.fullscreen) {
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     _tc.dispose();
     super.dispose();
+  }
+
+  void _applyOrientation() {
+    SystemChrome.setPreferredOrientations(
+      _landscape
+          ? [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ]
+          : [DeviceOrientation.portraitUp],
+    );
+  }
+
+  void _toggleOrientation() {
+    setState(() => _landscape = !_landscape);
+    _applyOrientation();
+  }
+
+  void _openFullscreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MindMapScreen(
+          state: widget.state,
+          initialRootId: _currentRootId,
+          fullscreen: true,
+          initialExpanded: {..._expanded},
+          initialRootOnRight: _rootOnRight,
+          initialFullNames: _fullNames,
+        ),
+      ),
+    );
   }
 
   // ───── قياس النص: عرض العقدة بقدر الاسم بلا هوامش كبيرة ─────
@@ -282,31 +348,150 @@ class _MindMapScreenState extends State<MindMapScreen> {
     );
   }
 
-  Future<void> _exportImage() async {
+  // ───── الصورة ─────
+
+  String _stamp() {
+    final n = DateTime.now();
+    String t(int v) => v.toString().padLeft(2, '0');
+    return '${n.year}-${t(n.month)}-${t(n.day)}_${t(n.hour)}${t(n.minute)}';
+  }
+
+  /// يلتقط الخريطة كاملة (لا المنطقة الظاهرة فقط) بخلفية بيضاء.
+  Future<Uint8List> _capturePng() async {
     final ctx = _canvasKey.currentContext;
-    if (ctx == null) return;
+    if (ctx == null) throw StateError('الخريطة غير جاهزة بعد');
+    final boundary = ctx.findRenderObject() as RenderRepaintBoundary;
+    final longest = math.max(boundary.size.width, boundary.size.height);
+    final ratio = math.min(3.0, 5000 / longest);
+    final image = await boundary.toImage(pixelRatio: ratio);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    if (data == null) throw StateError('فشل إنشاء الصورة');
+    return data.buffer.asUint8List();
+  }
+
+  /// حفظ الصورة في الجهاز: يفتح نافذة النظام لاختيار المجلد والاسم.
+  Future<void> _saveImage() async {
     try {
-      final boundary = ctx.findRenderObject() as RenderRepaintBoundary;
-      final longest = math.max(boundary.size.width, boundary.size.height);
-      final ratio = math.min(2.0, 4096 / longest);
-      final image = await boundary.toImage(pixelRatio: ratio);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      image.dispose();
-      if (data == null) throw StateError('فشل إنشاء الصورة');
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/family_tree_map.png');
-      await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
-        subject: 'خريطة العائلة',
+      final bytes = await _capturePng();
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'حفظ صورة الخريطة',
+        fileName: 'family_tree_map_${_stamp()}.png',
+        bytes: bytes,
       );
+      if (path != null && mounted) {
+        showMessage(context, 'تم حفظ الصورة');
+      }
     } catch (e) {
       if (mounted) showMessage(context, 'تعذّر حفظ الصورة: $e');
     }
   }
 
+  /// مشاركة الصورة عبر قائمة المشاركة (واتساب، البريد، ...).
+  Future<void> _shareImage() async {
+    try {
+      final bytes = await _capturePng();
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/family_tree_map_${_stamp()}.png');
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        subject: 'خريطة العائلة',
+      );
+    } catch (e) {
+      if (mounted) showMessage(context, 'تعذّرت المشاركة: $e');
+    }
+  }
+
   Matrix4 _matrix(double s, double tx, double ty) =>
       Matrix4(s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1);
+
+  void _onMenu(String v, MindNode root) {
+    switch (v) {
+      case 'root':
+        _pickRoot();
+      case 'share':
+        _shareImage();
+      default:
+        setState(() {
+          switch (v) {
+            case 'open':
+              _expanded = allExpandableKeys(root);
+            case 'close':
+              _expanded = keysUpToDepth(root, 1);
+            case 'dir':
+              _rootOnRight = !_rootOnRight;
+              _view = _ViewRequest.reset;
+            case 'names':
+              _fullNames = !_fullNames;
+            case 'reset':
+              _view = _ViewRequest.reset;
+          }
+        });
+    }
+  }
+
+  Widget _menuButton(MindNode root) {
+    return PopupMenuButton<String>(
+      onSelected: (v) => _onMenu(v, root),
+      itemBuilder: (_) => [
+        const PopupMenuItem(value: 'root', child: Text('اختيار الجذر')),
+        const PopupMenuItem(value: 'open', child: Text('فتح كل الفروع')),
+        const PopupMenuItem(value: 'close', child: Text('إغلاق الفروع')),
+        PopupMenuItem(
+          value: 'dir',
+          child: Text(_rootOnRight ? 'الجذر على اليسار' : 'الجذر على اليمين'),
+        ),
+        CheckedPopupMenuItem(
+          value: 'names',
+          checked: _fullNames,
+          child: const Text('الأسماء الكاملة'),
+        ),
+        const PopupMenuItem(value: 'reset', child: Text('إعادة التمركز')),
+        const PopupMenuItem(value: 'share', child: Text('مشاركة كصورة')),
+      ],
+    );
+  }
+
+  /// شريط أدوات عائم صغير لوضع ملء الشاشة.
+  Widget _fullscreenBar(MindNode root) {
+    return Material(
+      color: const Color(0xEBFFFFFF),
+      elevation: 4,
+      borderRadius: BorderRadius.circular(28),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'خروج من ملء الشاشة',
+            icon: const Icon(Icons.fullscreen_exit),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          IconButton(
+            tooltip: _landscape ? 'عرض عمودي' : 'عرض أفقي',
+            icon: const Icon(Icons.screen_rotation),
+            onPressed: _toggleOrientation,
+          ),
+          IconButton(
+            tooltip: 'ملاءمة الشاشة',
+            icon: const Icon(Icons.fit_screen),
+            onPressed: () => setState(() => _view = _ViewRequest.fit),
+          ),
+          IconButton(
+            tooltip: 'بحث في الخريطة',
+            icon: const Icon(Icons.search),
+            onPressed: () => _findInMap(root),
+          ),
+          IconButton(
+            tooltip: 'حفظ الصورة في الجهاز',
+            icon: const Icon(Icons.save_alt),
+            onPressed: _saveImage,
+          ),
+          _menuButton(root),
+        ],
+      ),
+    );
+  }
 
   // ───── العقدة ─────
 
@@ -460,6 +645,7 @@ class _MindMapScreenState extends State<MindMapScreen> {
             body: const Center(child: Text('لا يوجد أفراد بعد.')),
           );
         }
+        _currentRootId = rootId;
 
         final root = MindMapBuilder(state.all, state.allMarriages).build(rootId)!;
         if (_initializedFor != rootId) {
@@ -514,6 +700,111 @@ class _MindMapScreenState extends State<MindMapScreen> {
             math.max(2.5, 4.5 - 0.5 * layout.boxes[e.to].depth),
         ];
 
+        final viewer = LayoutBuilder(
+          builder: (context, constraints) {
+            final vw = constraints.maxWidth;
+            final vh = constraints.maxHeight;
+            final vp = Size(vw, vh);
+            final viewportChanged = _lastViewport != null && _lastViewport != vp;
+            _lastViewport = vp;
+
+            final focus = _focusKey;
+            var req = _view;
+            if (viewportChanged && req == _ViewRequest.none && focus == null) {
+              req = _ViewRequest.fit; // تدوير الشاشة: أعد الملاءمة
+            }
+            if (focus != null || req != _ViewRequest.none) {
+              _focusKey = null;
+              _view = _ViewRequest.none;
+              Matrix4? m;
+              if (focus != null) {
+                final i = layout.boxes.indexWhere((b) => b.node.key == focus);
+                if (i >= 0) {
+                  final c = effRects[i].center;
+                  m = _matrix(1, vw / 2 - c.dx, vh / 2 - c.dy);
+                }
+              }
+              if (m == null) {
+                if (req == _ViewRequest.fit) {
+                  final s = math
+                      .min(vw / canvasW, vh / canvasH)
+                      .clamp(0.2, 1.0)
+                      .toDouble();
+                  m = _matrix(s, (vw - canvasW * s) / 2, (vh - canvasH * s) / 2);
+                } else {
+                  final tx = _rootOnRight ? math.min(0.0, vw - canvasW) : 0.0;
+                  final ty = canvasH < vh ? (vh - canvasH) / 2 : 0.0;
+                  m = _matrix(1, tx, ty);
+                }
+              }
+              final target = m;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _tc.value = target;
+              });
+            }
+
+            return InteractiveViewer(
+              transformationController: _tc,
+              constrained: false,
+              minScale: 0.1,
+              maxScale: 3,
+              boundaryMargin: const EdgeInsets.all(600),
+              child: RepaintBoundary(
+                key: _canvasKey,
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: SizedBox(
+                    width: canvasW,
+                    height: canvasH,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _EdgesPainter(
+                              rects: effRects,
+                              edges: layout.edges,
+                              colors: edgeColors,
+                              widths: edgeWidths,
+                              rootOnRight: _rootOnRight,
+                            ),
+                          ),
+                        ),
+                        for (var i = 0; i < layout.boxes.length; i++)
+                          _nodeWidget(
+                            box: layout.boxes[i],
+                            size: sizes[i],
+                            eff: effRects[i],
+                            style: styles[i],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+
+        if (widget.fullscreen) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Stack(
+              children: [
+                Positioned.fill(child: viewer),
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: _fullscreenBar(root),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -527,133 +818,19 @@ class _MindMapScreenState extends State<MindMapScreen> {
                 onPressed: () => _findInMap(root),
               ),
               IconButton(
-                tooltip: 'ملاءمة الشاشة',
-                icon: const Icon(Icons.fit_screen),
-                onPressed: () => setState(() => _view = _ViewRequest.fit),
+                tooltip: 'ملء الشاشة وتدوير',
+                icon: const Icon(Icons.fullscreen),
+                onPressed: _openFullscreen,
               ),
-              PopupMenuButton<String>(
-                onSelected: (v) {
-                  switch (v) {
-                    case 'root':
-                      _pickRoot();
-                    case 'image':
-                      _exportImage();
-                    default:
-                      setState(() {
-                        switch (v) {
-                          case 'open':
-                            _expanded = allExpandableKeys(root);
-                          case 'close':
-                            _expanded = keysUpToDepth(root, 1);
-                          case 'dir':
-                            _rootOnRight = !_rootOnRight;
-                            _view = _ViewRequest.reset;
-                          case 'names':
-                            _fullNames = !_fullNames;
-                          case 'reset':
-                            _view = _ViewRequest.reset;
-                        }
-                      });
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(value: 'root', child: Text('اختيار الجذر')),
-                  const PopupMenuItem(value: 'open', child: Text('فتح كل الفروع')),
-                  const PopupMenuItem(value: 'close', child: Text('إغلاق الفروع')),
-                  PopupMenuItem(
-                    value: 'dir',
-                    child: Text(_rootOnRight
-                        ? 'الجذر على اليسار'
-                        : 'الجذر على اليمين'),
-                  ),
-                  CheckedPopupMenuItem(
-                    value: 'names',
-                    checked: _fullNames,
-                    child: const Text('الأسماء الكاملة'),
-                  ),
-                  const PopupMenuItem(value: 'reset', child: Text('إعادة التمركز')),
-                  const PopupMenuItem(value: 'image', child: Text('حفظ كصورة PNG')),
-                ],
+              IconButton(
+                tooltip: 'حفظ الصورة في الجهاز',
+                icon: const Icon(Icons.save_alt),
+                onPressed: _saveImage,
               ),
+              _menuButton(root),
             ],
           ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              final vw = constraints.maxWidth;
-              final vh = constraints.maxHeight;
-              final focus = _focusKey;
-              final req = _view;
-              if (focus != null || req != _ViewRequest.none) {
-                _focusKey = null;
-                _view = _ViewRequest.none;
-                Matrix4? m;
-                if (focus != null) {
-                  final i = layout.boxes.indexWhere((b) => b.node.key == focus);
-                  if (i >= 0) {
-                    final c = effRects[i].center;
-                    m = _matrix(1, vw / 2 - c.dx, vh / 2 - c.dy);
-                  }
-                }
-                if (m == null) {
-                  if (req == _ViewRequest.fit) {
-                    final s = math
-                        .min(vw / canvasW, vh / canvasH)
-                        .clamp(0.2, 1.0)
-                        .toDouble();
-                    m = _matrix(s, (vw - canvasW * s) / 2, (vh - canvasH * s) / 2);
-                  } else {
-                    final tx = _rootOnRight ? math.min(0.0, vw - canvasW) : 0.0;
-                    final ty = canvasH < vh ? (vh - canvasH) / 2 : 0.0;
-                    m = _matrix(1, tx, ty);
-                  }
-                }
-                final target = m;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) _tc.value = target;
-                });
-              }
-
-              return InteractiveViewer(
-                transformationController: _tc,
-                constrained: false,
-                minScale: 0.1,
-                maxScale: 3,
-                boundaryMargin: const EdgeInsets.all(600),
-                child: RepaintBoundary(
-                  key: _canvasKey,
-                  child: ColoredBox(
-                    color: Colors.white,
-                    child: SizedBox(
-                      width: canvasW,
-                      height: canvasH,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _EdgesPainter(
-                                rects: effRects,
-                                edges: layout.edges,
-                                colors: edgeColors,
-                                widths: edgeWidths,
-                                rootOnRight: _rootOnRight,
-                              ),
-                            ),
-                          ),
-                          for (var i = 0; i < layout.boxes.length; i++)
-                            _nodeWidget(
-                              box: layout.boxes[i],
-                              size: sizes[i],
-                              eff: effRects[i],
-                              style: styles[i],
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          body: viewer,
         );
       },
     );
