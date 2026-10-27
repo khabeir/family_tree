@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import 'person_detail_screen.dart';
 import 'person_form_screen.dart';
+import 'backup_screen.dart';
 import 'ui_helpers.dart';
 
 class PersonListScreen extends StatefulWidget {
@@ -37,6 +38,15 @@ class _PersonListScreenState extends State<PersonListScreen> {
     final state = widget.state;
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          IconButton(
+            tooltip: 'النسخ الاحتياطي والبيانات',
+            icon: const Icon(Icons.save_alt),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => BackupScreen(state: state)),
+            ),
+          ),
+        ],
         title: ListenableBuilder(
           listenable: state,
           builder: (context, _) => Text('شجرة عائلتي (${state.all.length})'),

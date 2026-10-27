@@ -13,13 +13,14 @@ import 'domain/family_service.dart';
 /// الحقل `name` في قاعدة البيانات هو الاسم الأول فقط. الاسم المعروض يُركَّب
 /// تلقائياً بسلسلة الآباء (حتى [maxNameParts] أجزاء).
 class AppState extends ChangeNotifier {
-  AppState(Database db)
+  AppState(this.db)
       : persons = PersonRepository(db),
         marriages = MarriageRepository(db) {
     service = FamilyService(persons, marriages);
   }
 
   static const int maxNameParts = 4;
+  final Database db;
 
   final PersonRepository persons;
   final MarriageRepository marriages;
