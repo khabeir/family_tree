@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
 import 'data/database/app_database.dart';
-import 'ui/person_list_screen.dart';
+import 'ui/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +31,7 @@ class FamilyTreeApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
-      home: PersonListScreen(state: state),
+      home: HomeScreen(state: state),
     );
   }
 }
