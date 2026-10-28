@@ -20,6 +20,7 @@ class FamilyTreeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32));
     return MaterialApp(
       title: 'شجرة عائلتي',
       debugShowCheckedModeBanner: false,
@@ -30,7 +31,23 @@ class FamilyTreeApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
+      theme: ThemeData(
+        colorScheme: scheme,
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(centerTitle: true, scrolledUnderElevation: 1),
+        cardTheme: CardTheme(
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          color: scheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        listTileTheme: ListTileThemeData(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
       home: HomeScreen(state: state),
     );
   }

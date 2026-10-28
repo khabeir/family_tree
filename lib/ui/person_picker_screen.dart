@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../data/models/person.dart';
-import 'ui_helpers.dart';
+import 'widgets.dart';
 
 class PersonPickerScreen extends StatefulWidget {
   const PersonPickerScreen({
@@ -42,28 +42,37 @@ class _PersonPickerScreenState extends State<PersonPickerScreen> {
             padding: const EdgeInsets.all(12),
             child: TextField(
               autofocus: true,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
                 hintText: 'ابحث بالاسم',
-                border: OutlineInputBorder(),
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(28),
+                  borderSide: BorderSide.none,
+                ),
               ),
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
           Expanded(
             child: items.isEmpty
-                ? const Center(child: Text('لا نتائج'))
+                ? const EmptyState(icon: Icons.search_off, message: 'لا نتائج')
                 : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
                     itemCount: items.length,
                     itemBuilder: (context, i) {
                       final p = items[i];
-                      return ListTile(
-                        leading: Icon(genderIcon(p.gender)),
-                        title: Text(widget.state.displayName(p)),
-                        subtitle: widget.state.parentsLabel(p) == null
-                            ? null
-                            : Text(widget.state.parentsLabel(p)!),
-                        onTap: () => Navigator.of(context).pop(p),
+                      final parents = widget.state.parentsLabel(p);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Card(
+                          child: ListTile(
+                            leading: PersonAvatar(gender: p.gender),
+                            title: Text(widget.state.displayName(p)),
+                            subtitle: parents == null ? null : Text(parents),
+                            onTap: () => Navigator.of(context).pop(p),
+                          ),
+                        ),
                       );
                     },
                   ),

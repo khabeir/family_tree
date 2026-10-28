@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../data/models/marriage.dart';
 import '../data/models/person.dart';
+import '../domain/relations.dart';
 import 'marriage_form_screen.dart';
 import 'mind_map_screen.dart';
 import 'person_form_screen.dart';
 import 'ui_helpers.dart';
+import 'widgets.dart';
 
 class PersonDetailScreen extends StatelessWidget {
   const PersonDetailScreen({
@@ -17,6 +19,11 @@ class PersonDetailScreen extends StatelessWidget {
 
   final AppState state;
   final int personId;
+
+  /// يعود إلى الشاشة الرئيسية مهما كان عمق التنقل بين الأشخاص.
+  void _goHome(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   void _open(BuildContext context, int id) {
     Navigator.of(context).push(
@@ -87,15 +94,107 @@ class PersonDetailScreen extends StatelessWidget {
     });
   }
 
-  Widget _header(BuildContext context, String title, {Widget? action}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-      child: Row(
+  void _openMindMap(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MindMapScreen(state: state, initialRootId: personId),
+      ),
+    );
+  }
+
+  Widget _personTile(
+    BuildContext context,
+    Person p, {
+    String? extra,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: PersonAvatar(gender: p.gender),
+      title: Text(state.displayName(p)),
+      subtitle: extra == null ? null : Text(extra),
+      trailing: const Icon(Icons.chevron_left),
+      onTap: () => _open(context, p.id!),
+    );
+  }
+
+  Widget _stat(BuildContext context, IconData icon, String label, int value) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xBFFFFFFF),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(height: 2),
+          Text('$value',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(label, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+
+  Widget _header(
+    BuildContext context,
+    Person p, {
+    required int kids,
+    required int spouses,
+    required int sibs,
+  }) {
+    final MaterialColor color = switch (p.gender) {
+      Gender.male => Colors.blue,
+      Gender.female => Colors.pink,
+      Gender.unknown => Colors.blueGrey,
+    };
+    final parents = state.parentsLabel(p);
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [color.shade50, color.shade100],
+        ),
+      ),
+      child: Column(
+        children: [
+          PersonAvatar(gender: p.gender, radius: 38),
+          const SizedBox(height: 10),
+          Text(
+            state.displayName(p),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
-          if (action != null) action,
+          const SizedBox(height: 4),
+          Text(
+            genderLabel(p.gender),
+            style: theme.textTheme.bodyMedium?.copyWith(color: color.shade800),
+          ),
+          if (parents != null) ...[
+            const SizedBox(height: 2),
+            Text(parents,
+                textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _stat(context, Icons.child_care, 'الأبناء', kids),
+              _stat(context, Icons.favorite_border, 'الزواج', spouses),
+              _stat(context, Icons.people_outline, 'الإخوة', sibs),
+            ],
+          ),
         ],
       ),
     );
@@ -109,109 +208,193 @@ class PersonDetailScreen extends StatelessWidget {
         final p = state.byId(personId);
         if (p == null) {
           return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('هذا الشخص غير موجود')),
+            appBar: AppBar(
+              actions: [
+                IconButton(
+                  tooltip: 'الرئيسية',
+                  icon: const Icon(Icons.home_outlined),
+                  onPressed: () => _goHome(context),
+                ),
+              ],
+            ),
+            body: const EmptyState(
+              icon: Icons.person_off_outlined,
+              message: 'هذا الشخص غير موجود',
+            ),
           );
         }
+
         final father = state.byId(p.fatherId);
         final mother = state.byId(p.motherId);
         final children = state.childrenOf(personId);
+        final marriages = state.allMarriages
+            .where((m) => m.person1Id == personId || m.person2Id == personId)
+            .toList()
+          ..sort((a, b) => a.id!.compareTo(b.id!));
+        final siblings = siblingsOf(state.all, p);
+        final chain = paternalChain((id) => state.byId(id), p);
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(state.displayName(p)),
+            title: Text(p.name),
             actions: [
               IconButton(
-                tooltip: 'خريطة ذهنية',
-                icon: const Icon(Icons.hub),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        MindMapScreen(state: state, initialRootId: personId),
-                  ),
-                ),
+                tooltip: 'الرئيسية',
+                icon: const Icon(Icons.home_outlined),
+                onPressed: () => _goHome(context),
               ),
-              IconButton(
-                tooltip: 'تعديل',
-                icon: const Icon(Icons.edit),
-                onPressed: () => _edit(context, p),
-              ),
-              IconButton(
-                tooltip: 'حذف',
-                icon: const Icon(Icons.delete),
-                onPressed: () => _delete(context, p),
+              PopupMenuButton<String>(
+                onSelected: (v) {
+                  if (v == 'edit') {
+                    _edit(context, p);
+                  } else if (v == 'delete') {
+                    _delete(context, p);
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'edit', child: Text('تعديل')),
+                  PopupMenuItem(value: 'delete', child: Text('حذف')),
+                ],
               ),
             ],
           ),
           body: ListView(
+            padding: const EdgeInsets.all(12),
             children: [
-              ListTile(
-                leading: Icon(genderIcon(p.gender)),
-                title: Text(genderLabel(p.gender)),
-              ),
-              if (p.notes != null)
-                ListTile(
-                  leading: const Icon(Icons.notes),
-                  title: Text(p.notes!),
-                ),
-              _header(context, 'الوالدان'),
-              if (father == null && mother == null)
-                const ListTile(title: Text('غير مسجلين')),
-              if (father != null)
-                ListTile(
-                  title: Text('الأب: ${state.displayName(father)}'),
-                  trailing: const Icon(Icons.chevron_left),
-                  onTap: () => _open(context, father.id!),
-                ),
-              if (mother != null)
-                ListTile(
-                  title: Text('الأم: ${state.displayName(mother)}'),
-                  trailing: const Icon(Icons.chevron_left),
-                  onTap: () => _open(context, mother.id!),
-                ),
               _header(
                 context,
-                'الزواج',
-                action: TextButton.icon(
+                p,
+                kids: children.length,
+                spouses: marriages.length,
+                sibs: siblings.length,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: () => _addChild(context, p),
+                      icon: const Icon(Icons.child_care),
+                      label: const Text('إضافة ابن/ابنة'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => _marriageForm(context, p),
+                      icon: const Icon(Icons.favorite_border),
+                      label: const Text('إضافة زواج'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => _openMindMap(context),
+                      icon: const Icon(Icons.hub),
+                      label: const Text('الخريطة الذهنية'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => _edit(context, p),
+                      icon: const Icon(Icons.edit),
+                      label: const Text('تعديل'),
+                    ),
+                  ],
+                ),
+              ),
+              if (chain.isNotEmpty)
+                SectionCard(
+                  title: 'سلسلة النسب',
+                  icon: Icons.timeline,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Chip(label: Text(p.name)),
+                          for (final a in chain) ...[
+                            const Icon(Icons.chevron_left, size: 18),
+                            ActionChip(
+                              label: Text(a.name),
+                              onPressed: () => _open(context, a.id!),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              SectionCard(
+                title: 'الوالدان',
+                icon: Icons.family_restroom,
+                children: [
+                  if (father == null && mother == null)
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('غير مسجلين'),
+                    ),
+                  if (father != null)
+                    _personTile(context, father, extra: 'الأب'),
+                  if (mother != null)
+                    _personTile(context, mother, extra: 'الأم'),
+                ],
+              ),
+              SectionCard(
+                title: 'الزواج (${marriages.length})',
+                icon: Icons.favorite,
+                trailing: TextButton.icon(
                   onPressed: () => _marriageForm(context, p),
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة'),
                 ),
+                children: [
+                  if (marriages.isEmpty)
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('لا توجد علاقات مسجلة'),
+                    ),
+                  for (final m in marriages) _marriageTile(context, p, m),
+                ],
               ),
-              FutureBuilder<List<Marriage>>(
-                future: state.marriagesOf(personId),
-                builder: (context, snapshot) {
-                  final list = snapshot.data;
-                  if (list == null) return const SizedBox.shrink();
-                  if (list.isEmpty) {
-                    return const ListTile(title: Text('لا توجد علاقات مسجلة'));
-                  }
-                  return Column(
-                    children: [
-                      for (final m in list) _marriageTile(context, p, m),
-                    ],
-                  );
-                },
-              ),
-              _header(
-                context,
-                'الأبناء (${children.length})',
-                action: TextButton.icon(
+              SectionCard(
+                title: 'الأبناء (${children.length})',
+                icon: Icons.child_care,
+                trailing: TextButton.icon(
                   onPressed: () => _addChild(context, p),
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة'),
                 ),
+                children: [
+                  if (children.isEmpty)
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('لا يوجد أبناء مسجلون'),
+                    ),
+                  for (final c in children) _personTile(context, c),
+                ],
               ),
-              if (children.isEmpty)
-                const ListTile(title: Text('لا يوجد أبناء مسجلون')),
-              for (final c in children)
-                ListTile(
-                  leading: Icon(genderIcon(c.gender)),
-                  title: Text(state.displayName(c)),
-                  trailing: const Icon(Icons.chevron_left),
-                  onTap: () => _open(context, c.id!),
+              if (siblings.isNotEmpty)
+                SectionCard(
+                  title: 'الإخوة والأخوات (${siblings.length})',
+                  icon: Icons.people_outline,
+                  children: [
+                    for (final s in siblings)
+                      _personTile(context, s.person, extra: siblingLabel(s)),
+                  ],
                 ),
-              const SizedBox(height: 32),
+              if (p.notes != null)
+                SectionCard(
+                  title: 'ملاحظات',
+                  icon: Icons.notes,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Text(p.notes!),
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -227,16 +410,28 @@ class PersonDetailScreen extends StatelessWidget {
       if (m.endDate != null) 'إلى ${m.endDate}',
     ].join(' ');
     return ListTile(
-      leading: const Icon(Icons.favorite),
+      contentPadding: EdgeInsets.zero,
+      leading: PersonAvatar(gender: other?.gender ?? Gender.unknown),
       title: Text(other == null ? 'غير معروف' : state.displayName(other)),
       subtitle: Text(
         [marriageStatusLabel(m.status), if (dates.isNotEmpty) dates].join(' • '),
       ),
       onTap: () => _marriageForm(context, p, m),
-      trailing: IconButton(
-        tooltip: 'حذف العلاقة',
-        icon: const Icon(Icons.delete_outline),
-        onPressed: () => _deleteMarriage(context, m),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (other != null)
+            IconButton(
+              tooltip: 'فتح الشخص',
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => _open(context, other.id!),
+            ),
+          IconButton(
+            tooltip: 'حذف العلاقة',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _deleteMarriage(context, m),
+          ),
+        ],
       ),
     );
   }
