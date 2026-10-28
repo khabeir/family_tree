@@ -7,6 +7,7 @@ import '../domain/relations.dart';
 import 'marriage_form_screen.dart';
 import 'mind_map_screen.dart';
 import 'person_form_screen.dart';
+import 'person_card_screen.dart';
 import 'ui_helpers.dart';
 import 'widgets.dart';
 
@@ -243,6 +244,16 @@ class PersonDetailScreen extends StatelessWidget {
                 icon: const Icon(Icons.home_outlined),
                 onPressed: () => _goHome(context),
               ),
+              IconButton(
+                tooltip: 'حفظ كصورة',
+                icon: const Icon(Icons.save_alt),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PersonCardScreen(state: state, personId: personId),
+                  ),
+                ),
+              ),
               PopupMenuButton<String>(
                 onSelected: (v) {
                   if (v == 'edit') {
@@ -288,6 +299,16 @@ class PersonDetailScreen extends StatelessWidget {
                       onPressed: () => _openMindMap(context),
                       icon: const Icon(Icons.hub),
                       label: const Text('الخريطة الذهنية'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PersonCardScreen(state: state, personId: personId),
+                        ),
+                      ),
+                      icon: const Icon(Icons.image_outlined),
+                      label: const Text('حفظ كصورة'),
                     ),
                     FilledButton.tonalIcon(
                       onPressed: () => _edit(context, p),

@@ -17,6 +17,7 @@ import '../domain/family_tree_index.dart';
 import '../domain/mind_map.dart';
 import 'person_detail_screen.dart';
 import 'person_picker_screen.dart';
+import 'image_export.dart';
 import 'ui_helpers.dart';
 
 const List<Color> _palette = [
@@ -103,6 +104,7 @@ class _MindMapScreenState extends State<MindMapScreen> {
   String? _highlightKey;
   String? _focusKey;
   Size? _lastViewport;
+  ImageQuality _quality = ImageQuality.fhd;
   _ViewRequest _view = _ViewRequest.reset;
 
   @override
@@ -361,8 +363,7 @@ class _MindMapScreenState extends State<MindMapScreen> {
     final ctx = _canvasKey.currentContext;
     if (ctx == null) throw StateError('الخريطة غير جاهزة بعد');
     final boundary = ctx.findRenderObject() as RenderRepaintBoundary;
-    final longest = math.max(boundary.size.width, boundary.size.height);
-    final ratio = math.min(3.0, 5000 / longest);
+    final ratio = _quality.ratioFor(boundary.size);
     final image = await boundary.toImage(pixelRatio: ratio);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
@@ -373,6 +374,9 @@ class _MindMapScreenState extends State<MindMapScreen> {
   /// حفظ الصورة في الجهاز: يفتح نافذة النظام لاختيار المجلد والاسم.
   Future<void> _saveImage() async {
     try {
+      final q = await askImageQuality(context, _quality);
+      if (q == null) return;
+      _quality = q;
       final bytes = await _capturePng();
       final path = await FilePicker.platform.saveFile(
         dialogTitle: 'حفظ صورة الخريطة',
@@ -390,6 +394,9 @@ class _MindMapScreenState extends State<MindMapScreen> {
   /// مشاركة الصورة عبر قائمة المشاركة (واتساب، البريد، ...).
   Future<void> _shareImage() async {
     try {
+      final q = await askImageQuality(context, _quality);
+      if (q == null) return;
+      _quality = q;
       final bytes = await _capturePng();
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/family_tree_map_${_stamp()}.png');
