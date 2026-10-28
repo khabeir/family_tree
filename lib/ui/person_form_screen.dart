@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../core/arabic_text.dart';
 import '../data/models/person.dart';
 import '../domain/family_service.dart';
 import 'person_picker_screen.dart';
@@ -94,6 +95,27 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
       notes: _notes.text,
       createdAt: base?.createdAt,
     );
+    final fullName = widget.state
+        .composeName(person.name, person.fatherId, selfId: base?.id);
+    final nameChanged = base == null ||
+        base.name != person.name.trim().replaceAll(RegExp(r'\s+'), ' ') ||
+        base.fatherId != person.fatherId;
+    final duplicate = widget.state.all.any((o) =>
+        o.id != base?.id &&
+        normalizeArabic(widget.state.displayName(o)) == normalizeArabic(fullName));
+    if (nameChanged && duplicate) {
+      final go = await confirmDialog(
+        context,
+        title: 'اسم مكرر',
+        message: 'يوجد شخص بالاسم الكامل نفسه: ' + fullName + '. هل تريد المتابعة؟',
+        confirmLabel: 'متابعة',
+      );
+      if (!go || !mounted) {
+        if (mounted) setState(() => _saving = false);
+        return;
+      }
+    }
+
     final ok = await runGuarded(context, () async {
       if (base == null) {
         await widget.state.addPerson(person);

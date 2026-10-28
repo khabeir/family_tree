@@ -6,9 +6,18 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,14 +42,27 @@ jobs:
             rm -f test/widget_test.dart
           fi
 
+      - name: Decode signing key (if provided)
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "Fixed release key found"
+          else
+            echo "No signing secrets: debug key will be used"
+          fi
+
+      - name: Prepare Android (label, icon, signing)
+        run: bash tool/prepare_android.sh
+
       - run: flutter --version
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
-      - run: flutter build apk --release
+      - run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: family-tree-apk
+          name: family-tree-apk-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
