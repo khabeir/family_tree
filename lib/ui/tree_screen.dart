@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../domain/family_tree_index.dart';
 import 'person_detail_screen.dart';
-import 'ui_helpers.dart';
+import 'widgets.dart';
 
 class TreeScreen extends StatefulWidget {
   const TreeScreen({super.key, required this.state});
@@ -47,49 +47,77 @@ class _TreeScreenState extends State<TreeScreen> {
     final state = widget.state;
     final p = r.person;
     final theme = Theme.of(context);
-    final indent = 8 + math.min(r.depth, 14) * 20.0;
+    final scheme = theme.colorScheme;
+    final depth = math.min(r.depth, 14);
+
     return InkWell(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PersonDetailScreen(state: state, personId: p.id!),
         ),
       ),
-      child: Padding(
-        padding: EdgeInsetsDirectional.only(
-            start: indent, end: 8, top: 2, bottom: 2),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsetsDirectional.only(start: 8, end: 10),
+        color: r.isMatch ? scheme.primaryContainer.withAlpha(120) : null,
         child: Row(
           children: [
+            // خطوط عمودية رفيعة تُظهر عمق الجيل
+            for (var d = 0; d < depth; d++)
+              Container(
+                width: 20,
+                decoration: BoxDecoration(
+                  border: BorderDirectional(
+                    end: BorderSide(color: scheme.outlineVariant),
+                  ),
+                ),
+              ),
             SizedBox(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               child: r.hasVisibleChildren
                   ? IconButton(
                       padding: EdgeInsets.zero,
                       tooltip: r.expanded ? 'إغلاق الفرع' : 'فتح الفرع',
-                      icon: Icon(r.expanded
-                          ? Icons.keyboard_arrow_down
-                          : Icons.keyboard_arrow_left),
+                      icon: Icon(
+                        r.expanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_left,
+                        color: scheme.primary,
+                      ),
                       onPressed: searching ? null : () => _toggle(p.id!),
                     )
                   : null,
             ),
-            Icon(genderIcon(p.gender), size: 20),
+            PersonAvatar(gender: p.gender, radius: 14),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 state.displayName(p),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: r.isMatch
                     ? TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
+                        color: scheme.primary,
                       )
                     : null,
               ),
             ),
             if (r.childCount > 0)
-              Text(
-                '${r.childCount}',
-                style: theme.textTheme.bodySmall,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${r.childCount}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSecondaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
           ],
         ),
@@ -145,7 +173,11 @@ class _TreeScreenState extends State<TreeScreen> {
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'ابحث في الشجرة بالاسم',
-                    border: const OutlineInputBorder(),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(28),
+                      borderSide: BorderSide.none,
+                    ),
                     suffixIcon: _query.isEmpty
                         ? null
                         : IconButton(
@@ -161,13 +193,17 @@ class _TreeScreenState extends State<TreeScreen> {
               ),
               Expanded(
                 child: rows.isEmpty
-                    ? Center(
-                        child: Text(widget.state.all.isEmpty
+                    ? EmptyState(
+                        icon: widget.state.all.isEmpty
+                            ? Icons.account_tree_outlined
+                            : Icons.search_off,
+                        message: widget.state.all.isEmpty
                             ? 'لا يوجد أفراد بعد.'
-                            : 'لا نتائج مطابقة'),
+                            : 'لا نتائج مطابقة',
                       )
                     : ListView.builder(
                         itemCount: rows.length,
+                        itemExtent: 48,
                         itemBuilder: (context, i) =>
                             _row(context, rows[i], searching),
                       ),

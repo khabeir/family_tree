@@ -123,7 +123,7 @@ class PersonDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xBFFFFFFF),
+        color: theme.colorScheme.surface.withAlpha(200),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -162,7 +162,10 @@ class PersonDetailScreen extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [color.shade50, color.shade100],
+          colors: [
+            Color.alphaBlend(color.withAlpha(46), theme.colorScheme.surface),
+            Color.alphaBlend(color.withAlpha(90), theme.colorScheme.surface),
+          ],
         ),
       ),
       child: Column(
@@ -178,7 +181,7 @@ class PersonDetailScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             genderLabel(p.gender),
-            style: theme.textTheme.bodyMedium?.copyWith(color: color.shade800),
+            style: theme.textTheme.bodyMedium?.copyWith(color: color),
           ),
           if (parents != null) ...[
             const SizedBox(height: 2),

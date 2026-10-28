@@ -36,21 +36,78 @@ class _PersonListScreenState extends State<PersonListScreen> {
     );
   }
 
-  Widget _stat(BuildContext context, IconData icon, String label, int value,
-      Color color) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget _banner(
+    BuildContext context,
+    int total,
+    int males,
+    int females,
+    int marriages,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final on = scheme.onPrimary;
+
+    Widget mini(IconData icon, String label, int value) {
+      return Expanded(
         child: Column(
           children: [
-            Icon(icon, size: 20, color: color),
-            Text('$value',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            Text(label, style: theme.textTheme.bodySmall),
+            Icon(icon, color: on.withAlpha(220), size: 20),
+            const SizedBox(height: 2),
+            Text(
+              '$value',
+              style: TextStyle(
+                color: on,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(color: on.withAlpha(200), fontSize: 11),
+            ),
           ],
         ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [scheme.primary, scheme.tertiary],
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$total',
+                  style: TextStyle(
+                    color: on,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'فرداً في شجرة العائلة',
+                  style: TextStyle(color: on.withAlpha(220)),
+                ),
+              ],
+            ),
+          ),
+          mini(Icons.man, 'ذكور', males),
+          mini(Icons.woman, 'إناث', females),
+          mini(Icons.favorite, 'زيجات', marriages),
+        ],
       ),
     );
   }
@@ -91,32 +148,8 @@ class _PersonListScreenState extends State<PersonListScreen> {
 
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _stat(context, Icons.groups, 'الأفراد', all.length,
-                          Theme.of(context).colorScheme.primary),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(context, Icons.man, 'ذكور', males,
-                          Colors.blue.shade700),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(context, Icons.woman, 'إناث', females,
-                          Colors.pink.shade600),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(context, Icons.favorite, 'الزيجات',
-                          state.allMarriages.length, Colors.red.shade400),
-                    ),
-                  ],
-                ),
-              ),
+              _banner(context, all.length, males, females,
+                  state.allMarriages.length),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                 child: TextField(
