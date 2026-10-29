@@ -22,10 +22,10 @@ import 'ui_helpers.dart';
 
 const List<Color> _palette = [
   Color(0xFFD81B60),
-  Color(0xFF00897B),
+  Color(0xFFC62828),
   Color(0xFF3949AB),
   Color(0xFFF57C00),
-  Color(0xFF43A047),
+  Color(0xFF455A64),
   Color(0xFF8E24AA),
   Color(0xFF6D4C41),
   Color(0xFF1E88E5),

@@ -23,10 +23,10 @@ enum CardSection {
 const List<MaterialColor> cardPalette = [
   Colors.blue,
   Colors.pink,
-  Colors.green,
+  Colors.red,
   Colors.orange,
   Colors.purple,
-  Colors.teal,
+  Colors.blueGrey,
   Colors.brown,
   Colors.indigo,
 ];
@@ -34,7 +34,7 @@ const List<MaterialColor> cardPalette = [
 MaterialColor cardAccentFor(Gender g) => switch (g) {
       Gender.male => Colors.blue,
       Gender.female => Colors.pink,
-      Gender.unknown => Colors.teal,
+      Gender.unknown => Colors.blueGrey,
     };
 
 /// بطاقة الفرد: عرض ثابت 480، خلفية بيضاء، مصمّمة لتُلتقط كصورة عالية الدقة.
