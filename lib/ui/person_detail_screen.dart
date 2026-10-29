@@ -118,23 +118,26 @@ class PersonDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _stat(BuildContext context, IconData icon, String label, int value) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withAlpha(200),
-        borderRadius: BorderRadius.circular(14),
-      ),
+  Widget _stat(BuildContext context, String label, int value) {
+    final scheme = Theme.of(context).colorScheme;
+    return Expanded(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(height: 2),
-          Text('$value',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text(label, style: theme.textTheme.bodySmall),
+          Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: scheme.onPrimaryContainer,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: scheme.onPrimaryContainer.withAlpha(190),
+            ),
+          ),
         ],
       ),
     );
@@ -147,57 +150,88 @@ class PersonDetailScreen extends StatelessWidget {
     required int spouses,
     required int sibs,
   }) {
-    final MaterialColor color = switch (p.gender) {
-      Gender.male => Colors.blue,
-      Gender.female => Colors.pink,
-      Gender.unknown => Colors.blueGrey,
-    };
     final parents = state.parentsLabel(p);
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            Color.alphaBlend(color.withAlpha(46), theme.colorScheme.surface),
-            Color.alphaBlend(color.withAlpha(90), theme.colorScheme.surface),
-          ],
-        ),
-      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
-          PersonAvatar(gender: p.gender, radius: 38),
-          const SizedBox(height: 10),
-          Text(
-            state.displayName(p),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [Colors.blue.shade700, Colors.blue.shade400],
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 38,
+                    backgroundColor: Colors.blue.shade50,
+                    foregroundColor: Colors.blue.shade700,
+                    child: Icon(genderIcon(p.gender), size: 44),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  state.displayName(p),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    height: 1.25,
+                  ),
+                ),
+                if (parents != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    parents,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    genderLabel(p.gender),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            genderLabel(p.gender),
-            style: theme.textTheme.bodyMedium?.copyWith(color: color),
-          ),
-          if (parents != null) ...[
-            const SizedBox(height: 2),
-            Text(parents,
-                textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _stat(context, Icons.child_care, 'الأبناء', kids),
-              _stat(context, Icons.favorite_border, 'الزواج', spouses),
-              _stat(context, Icons.people_outline, 'الإخوة', sibs),
-            ],
+          Container(
+            color: scheme.primaryContainer,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                _stat(context, 'الأبناء', kids),
+                _stat(context, 'الزواج', spouses),
+                _stat(context, 'الإخوة', sibs),
+              ],
+            ),
           ),
         ],
       ),

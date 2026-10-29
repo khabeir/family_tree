@@ -50,7 +50,7 @@ class _PersonListScreenState extends State<PersonListScreen> {
       return Expanded(
         child: Column(
           children: [
-            Icon(icon, color: on.withAlpha(220), size: 20),
+            Icon(icon, color: on, size: 20),
             const SizedBox(height: 2),
             Text(
               '$value',
@@ -62,7 +62,7 @@ class _PersonListScreenState extends State<PersonListScreen> {
             ),
             Text(
               label,
-              style: TextStyle(color: on.withAlpha(200), fontSize: 11),
+              style: TextStyle(color: on, fontSize: 11),
             ),
           ],
         ),
@@ -99,7 +99,7 @@ class _PersonListScreenState extends State<PersonListScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'فرداً في شجرة العائلة',
-                  style: TextStyle(color: on.withAlpha(220)),
+                  style: TextStyle(color: on),
                 ),
               ],
             ),

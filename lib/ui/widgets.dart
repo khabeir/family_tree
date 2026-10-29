@@ -26,7 +26,7 @@ class PersonAvatar extends StatelessWidget {
   }
 }
 
-/// بطاقة قسم بعنوان وأيقونة وزر اختياري.
+/// بطاقة قسم: أيقونة في دائرة زرقاء فاتحة، عنوان أزرق غامق، وخط رفيع (كبطاقة الفرد).
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -44,28 +44,40 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(icon, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    shape: BoxShape.circle,
                   ),
+                  child: Icon(icon, size: 18, color: scheme.primary),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.secondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Divider(height: 1, color: scheme.outlineVariant),
                 ),
                 if (trailing != null) trailing!,
               ],
             ),
-            const Divider(height: 16),
+            const SizedBox(height: 8),
             ...children,
           ],
         ),

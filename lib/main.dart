@@ -14,53 +14,47 @@ Future<void> main() async {
   runApp(FamilyTreeApp(state: state));
 }
 
-/// لوحة الألوان:
-///  - الخلفية: أبيض صريح.
-///  - الأزرق بتدرجاته: كحلي #1E3A8A (ترويسات) ← أزرق #1E40AF (أساسي) ← #2563EB (تدرج)
-///    ← أزرق فاتح #DBEAFE / #EEF4FF / #F5F9FF (بطاقات وحقول).
-///  - نص: كحلي غامق #0B1B3A، والثانوي #475A7A.
-///  - أحمر فقط للحذف/القلب، وكهرماني #F59E0B لإبراز نتيجة البحث. لا أخضر.
 ColorScheme _scheme(Brightness b) {
   final base = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1E40AF),
+    seedColor: const Color(0xFF1976D2),
     brightness: b,
   );
   if (b == Brightness.light) {
     return base.copyWith(
-      primary: const Color(0xFF1E40AF),
+      primary: const Color(0xFF1976D2), // Blue 700
       onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFDBEAFE),
-      onPrimaryContainer: const Color(0xFF1E3A8A),
-      secondary: const Color(0xFF0369A1),
+      primaryContainer: const Color(0xFFE3F2FD), // Blue 50
+      onPrimaryContainer: const Color(0xFF0D47A1), // Blue 900
+      secondary: const Color(0xFF1565C0), // Blue 800
       onSecondary: Colors.white,
-      secondaryContainer: const Color(0xFFE0F2FE),
-      onSecondaryContainer: const Color(0xFF0C4A6E),
-      tertiary: const Color(0xFF2563EB),
+      secondaryContainer: const Color(0xFFBBDEFB), // Blue 100
+      onSecondaryContainer: const Color(0xFF0D47A1),
+      tertiary: const Color(0xFF2196F3), // Blue 500
       onTertiary: Colors.white,
       surface: Colors.white,
-      onSurface: const Color(0xFF0B1B3A),
+      onSurface: const Color(0xFF14213D),
       onSurfaceVariant: const Color(0xFF475A7A),
       surfaceContainerLowest: Colors.white,
-      surfaceContainerLow: const Color(0xFFF5F9FF),
-      surfaceContainer: const Color(0xFFEEF4FF),
-      surfaceContainerHigh: const Color(0xFFE3EDFE),
-      surfaceContainerHighest: const Color(0xFFD9E6FD),
-      outline: const Color(0xFF8CA3C7),
-      outlineVariant: const Color(0xFFD3E1FA),
+      surfaceContainerLow: const Color(0xFFF3F9FF),
+      surfaceContainer: const Color(0xFFE9F3FD),
+      surfaceContainerHigh: const Color(0xFFDDECFB),
+      surfaceContainerHighest: const Color(0xFFCFE3F8),
+      outline: const Color(0xFF7FA7D4),
+      outlineVariant: const Color(0xFFCFE3F8),
       surfaceTint: Colors.transparent,
     );
   }
   return base.copyWith(
-    primary: const Color(0xFF93C5FD),
-    onPrimary: const Color(0xFF0B2A5B),
-    primaryContainer: const Color(0xFF1E3A8A),
-    onPrimaryContainer: const Color(0xFFDBEAFE),
-    secondary: const Color(0xFF7DD3FC),
-    onSecondary: const Color(0xFF0C4A6E),
-    secondaryContainer: const Color(0xFF0C4A6E),
-    onSecondaryContainer: const Color(0xFFE0F2FE),
-    tertiary: const Color(0xFF60A5FA),
-    onTertiary: const Color(0xFF0B2A5B),
+    primary: const Color(0xFF64B5F6), // Blue 300
+    onPrimary: const Color(0xFF0D2B52),
+    primaryContainer: const Color(0xFF0D47A1),
+    onPrimaryContainer: const Color(0xFFE3F2FD),
+    secondary: const Color(0xFF90CAF9), // Blue 200
+    onSecondary: const Color(0xFF0D2B52),
+    secondaryContainer: const Color(0xFF1565C0),
+    onSecondaryContainer: const Color(0xFFE3F2FD),
+    tertiary: const Color(0xFF42A5F5),
+    onTertiary: const Color(0xFF0D2B52),
     surface: const Color(0xFF0B1220),
     onSurface: const Color(0xFFEFF6FF),
     onSurfaceVariant: const Color(0xFFBFD3F2),
@@ -79,9 +73,9 @@ ThemeData _buildTheme(Brightness b) {
   final dark = b == Brightness.dark;
   final scheme = _scheme(b);
   final scaffold = dark ? const Color(0xFF0B1220) : Colors.white;
-  final cardColor = dark ? const Color(0xFF111B31) : const Color(0xFFF5F9FF);
-  final fieldFill = dark ? const Color(0xFF16233F) : const Color(0xFFEEF4FF);
-  final appBarColor = dark ? const Color(0xFF172554) : const Color(0xFF1E40AF);
+  final cardColor = dark ? const Color(0xFF111B31) : const Color(0xFFF3F9FF);
+  final fieldFill = dark ? const Color(0xFF16233F) : const Color(0xFFE9F3FD);
+  final appBarColor = dark ? const Color(0xFF0D3C7A) : const Color(0xFF1976D2);
   final shape12 = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
 
   return ThemeData(
@@ -129,7 +123,7 @@ ThemeData _buildTheme(Brightness b) {
     listTileTheme: ListTileThemeData(shape: shape12),
     dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1),
     chipTheme: ChipThemeData(
-      backgroundColor: Colors.white,
+      backgroundColor: dark ? const Color(0xFF16233F) : Colors.white,
       selectedColor: scheme.primaryContainer,
       checkmarkColor: scheme.primary,
       side: BorderSide(color: scheme.outlineVariant),
@@ -146,7 +140,7 @@ ThemeData _buildTheme(Brightness b) {
       iconTheme: WidgetStateProperty.resolveWith(
         (states) => IconThemeData(
           color: states.contains(WidgetState.selected)
-              ? scheme.primary
+              ? (dark ? scheme.primary : scheme.secondary)
               : scheme.onSurfaceVariant,
         ),
       ),
@@ -155,7 +149,7 @@ ThemeData _buildTheme(Brightness b) {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: states.contains(WidgetState.selected)
-              ? scheme.primary
+              ? (dark ? scheme.primary : scheme.secondary)
               : scheme.onSurfaceVariant,
         ),
       ),
@@ -180,7 +174,7 @@ ThemeData _buildTheme(Brightness b) {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: dark ? const Color(0xFF233659) : const Color(0xFF0F1F4D),
+      backgroundColor: dark ? const Color(0xFF233659) : const Color(0xFF0D2B52),
       contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
       shape: shape12,
     ),
