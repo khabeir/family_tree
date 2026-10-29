@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
@@ -13,34 +14,39 @@ Future<void> main() async {
   runApp(FamilyTreeApp(state: state));
 }
 
-const Color _brand = Color(0xFF1E40AF);
-
-/// لوحة ألوان صريحة: أزرق للتمييز، رمادي-أزرق فاتح للخلفية، بطاقات بيضاء بحدود واضحة،
-/// ونص داكن عالي التباين. لا ظلال ملوّنة (surfaceTint) ولا أخضر.
+/// لوحة الألوان:
+///  - الخلفية: أبيض صريح.
+///  - الأزرق بتدرجاته: كحلي #1E3A8A (ترويسات) ← أزرق #1E40AF (أساسي) ← #2563EB (تدرج)
+///    ← أزرق فاتح #DBEAFE / #EEF4FF / #F5F9FF (بطاقات وحقول).
+///  - نص: كحلي غامق #0B1B3A، والثانوي #475A7A.
+///  - أحمر فقط للحذف/القلب، وكهرماني #F59E0B لإبراز نتيجة البحث. لا أخضر.
 ColorScheme _scheme(Brightness b) {
-  final base = ColorScheme.fromSeed(seedColor: _brand, brightness: b);
+  final base = ColorScheme.fromSeed(
+    seedColor: const Color(0xFF1E40AF),
+    brightness: b,
+  );
   if (b == Brightness.light) {
     return base.copyWith(
       primary: const Color(0xFF1E40AF),
       onPrimary: Colors.white,
       primaryContainer: const Color(0xFFDBEAFE),
       onPrimaryContainer: const Color(0xFF1E3A8A),
-      secondary: const Color(0xFF475569),
+      secondary: const Color(0xFF0369A1),
       onSecondary: Colors.white,
-      secondaryContainer: const Color(0xFFE2E8F0),
-      onSecondaryContainer: const Color(0xFF0F172A),
+      secondaryContainer: const Color(0xFFE0F2FE),
+      onSecondaryContainer: const Color(0xFF0C4A6E),
       tertiary: const Color(0xFF2563EB),
       onTertiary: Colors.white,
       surface: Colors.white,
-      onSurface: const Color(0xFF0F172A),
-      onSurfaceVariant: const Color(0xFF475569),
+      onSurface: const Color(0xFF0B1B3A),
+      onSurfaceVariant: const Color(0xFF475A7A),
       surfaceContainerLowest: Colors.white,
-      surfaceContainerLow: Colors.white,
-      surfaceContainer: const Color(0xFFF1F5F9),
-      surfaceContainerHigh: const Color(0xFFE9EEF5),
-      surfaceContainerHighest: const Color(0xFFE2E8F0),
-      outline: const Color(0xFF94A3B8),
-      outlineVariant: const Color(0xFFD9E0EA),
+      surfaceContainerLow: const Color(0xFFF5F9FF),
+      surfaceContainer: const Color(0xFFEEF4FF),
+      surfaceContainerHigh: const Color(0xFFE3EDFE),
+      surfaceContainerHighest: const Color(0xFFD9E6FD),
+      outline: const Color(0xFF8CA3C7),
+      outlineVariant: const Color(0xFFD3E1FA),
       surfaceTint: Colors.transparent,
     );
   }
@@ -49,22 +55,22 @@ ColorScheme _scheme(Brightness b) {
     onPrimary: const Color(0xFF0B2A5B),
     primaryContainer: const Color(0xFF1E3A8A),
     onPrimaryContainer: const Color(0xFFDBEAFE),
-    secondary: const Color(0xFFCBD5E1),
-    onSecondary: const Color(0xFF0F172A),
-    secondaryContainer: const Color(0xFF334155),
-    onSecondaryContainer: const Color(0xFFE2E8F0),
+    secondary: const Color(0xFF7DD3FC),
+    onSecondary: const Color(0xFF0C4A6E),
+    secondaryContainer: const Color(0xFF0C4A6E),
+    onSecondaryContainer: const Color(0xFFE0F2FE),
     tertiary: const Color(0xFF60A5FA),
     onTertiary: const Color(0xFF0B2A5B),
-    surface: const Color(0xFF111827),
-    onSurface: const Color(0xFFF1F5F9),
-    onSurfaceVariant: const Color(0xFFCBD5E1),
-    surfaceContainerLowest: const Color(0xFF0B1220),
-    surfaceContainerLow: const Color(0xFF182235),
-    surfaceContainer: const Color(0xFF1E293B),
-    surfaceContainerHigh: const Color(0xFF243349),
-    surfaceContainerHighest: const Color(0xFF2B3A52),
-    outline: const Color(0xFF64748B),
-    outlineVariant: const Color(0xFF334155),
+    surface: const Color(0xFF0B1220),
+    onSurface: const Color(0xFFEFF6FF),
+    onSurfaceVariant: const Color(0xFFBFD3F2),
+    surfaceContainerLowest: const Color(0xFF080E1A),
+    surfaceContainerLow: const Color(0xFF111B31),
+    surfaceContainer: const Color(0xFF16233F),
+    surfaceContainerHigh: const Color(0xFF1C2C4E),
+    surfaceContainerHighest: const Color(0xFF233659),
+    outline: const Color(0xFF5B729A),
+    outlineVariant: const Color(0xFF263B63),
     surfaceTint: Colors.transparent,
   );
 }
@@ -72,10 +78,11 @@ ColorScheme _scheme(Brightness b) {
 ThemeData _buildTheme(Brightness b) {
   final dark = b == Brightness.dark;
   final scheme = _scheme(b);
-  final scaffold = dark ? const Color(0xFF0B1220) : const Color(0xFFF4F6FA);
-  final cardColor = dark ? const Color(0xFF182235) : Colors.white;
-  final fieldFill = dark ? const Color(0xFF1E293B) : Colors.white;
-  final radius12 = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+  final scaffold = dark ? const Color(0xFF0B1220) : Colors.white;
+  final cardColor = dark ? const Color(0xFF111B31) : const Color(0xFFF5F9FF);
+  final fieldFill = dark ? const Color(0xFF16233F) : const Color(0xFFEEF4FF);
+  final appBarColor = dark ? const Color(0xFF172554) : const Color(0xFF1E40AF);
+  final shape12 = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
 
   return ThemeData(
     useMaterial3: true,
@@ -83,14 +90,18 @@ ThemeData _buildTheme(Brightness b) {
     scaffoldBackgroundColor: scaffold,
     appBarTheme: AppBarTheme(
       centerTitle: true,
-      backgroundColor: scheme.surface,
-      foregroundColor: scheme.onSurface,
+      elevation: 0,
+      scrolledUnderElevation: 2,
+      backgroundColor: appBarColor,
+      foregroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
-      scrolledUnderElevation: 1,
-      titleTextStyle: TextStyle(
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actionsIconTheme: const IconThemeData(color: Colors.white),
+      titleTextStyle: const TextStyle(
         fontSize: 19,
         fontWeight: FontWeight.w700,
-        color: scheme.onSurface,
+        color: Colors.white,
       ),
     ),
     cardTheme: CardTheme(
@@ -115,10 +126,10 @@ ThemeData _buildTheme(Brightness b) {
         borderSide: BorderSide(color: scheme.primary, width: 2),
       ),
     ),
-    listTileTheme: ListTileThemeData(shape: radius12),
+    listTileTheme: ListTileThemeData(shape: shape12),
     dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1),
     chipTheme: ChipThemeData(
-      backgroundColor: cardColor,
+      backgroundColor: Colors.white,
       selectedColor: scheme.primaryContainer,
       checkmarkColor: scheme.primary,
       side: BorderSide(color: scheme.outlineVariant),
@@ -129,7 +140,7 @@ ThemeData _buildTheme(Brightness b) {
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 68,
-      backgroundColor: scheme.surface,
+      backgroundColor: scaffold,
       surfaceTintColor: Colors.transparent,
       indicatorColor: scheme.primaryContainer,
       iconTheme: WidgetStateProperty.resolveWith(
@@ -156,22 +167,22 @@ ThemeData _buildTheme(Brightness b) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     dialogTheme: DialogTheme(
-      backgroundColor: cardColor,
+      backgroundColor: dark ? const Color(0xFF111B31) : Colors.white,
       surfaceTintColor: Colors.transparent,
     ),
     popupMenuTheme: PopupMenuThemeData(
-      color: cardColor,
+      color: dark ? const Color(0xFF111B31) : Colors.white,
       surfaceTintColor: Colors.transparent,
     ),
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: cardColor,
+      backgroundColor: dark ? const Color(0xFF111B31) : Colors.white,
       surfaceTintColor: Colors.transparent,
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: dark ? const Color(0xFF334155) : const Color(0xFF1E293B),
+      backgroundColor: dark ? const Color(0xFF233659) : const Color(0xFF0F1F4D),
       contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
-      shape: radius12,
+      shape: shape12,
     ),
   );
 }
