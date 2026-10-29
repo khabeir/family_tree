@@ -81,6 +81,81 @@ Future<ImageQuality?> askImageQuality(
   );
 }
 
+/// اختيار المستخدم عند المشاركة: الجودة، وهل تُرسل كصورة أم كملف.
+class ShareChoice {
+  const ShareChoice(this.quality, this.asDocument);
+
+  final ImageQuality quality;
+  final bool asDocument;
+}
+
+/// ورقة سفلية للمشاركة: جودة + «كصورة» أو «كملف».
+Future<ShareChoice?> showShareOptions(
+  BuildContext context, {
+  required ImageQuality initial,
+}) {
+  var quality = initial;
+  return showModalBottomSheet<ShareChoice>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSheetState) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'مشاركة الصورة',
+                style: Theme.of(ctx)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<ImageQuality>(
+                segments: [
+                  for (final q in ImageQuality.values)
+                    ButtonSegment(value: q, label: Text(q.label)),
+                ],
+                selected: {quality},
+                onSelectionChanged: (s) =>
+                    setSheetState(() => quality = s.first),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  quality.description,
+                  style: Theme.of(ctx).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => Navigator.of(ctx).pop(ShareChoice(quality, false)),
+                icon: const Icon(Icons.image_outlined),
+                label: const Text('مشاركة كصورة'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(ctx).pop(ShareChoice(quality, true)),
+                icon: const Icon(Icons.attach_file),
+                label: const Text('مشاركة كملف (بلا ضغط في واتساب)'),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '«كملف» يرسلها واتساب كمستند بجودتها الكاملة. وإن لم يظهر تطبيق '
+                'تريده في القائمة فاستخدم «كصورة».',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 String imageTimestamp() {
   final n = DateTime.now();
   String t(int v) => v.toString().padLeft(2, '0');
@@ -110,16 +185,24 @@ Future<bool> saveImageToDevice(Uint8List bytes, String fileName) async {
   return path != null;
 }
 
+/// يشارك الصورة عبر قائمة المشاركة. مع [asDocument] تُرسل كملف عام
+/// (يعاملها واتساب كمستند فلا يضغطها).
 Future<void> shareImageBytes(
   Uint8List bytes,
   String fileName, {
   String? subject,
+  bool asDocument = false,
 }) async {
   final dir = await getTemporaryDirectory();
   final file = File('${dir.path}/$fileName');
   await file.writeAsBytes(bytes, flush: true);
   await Share.shareXFiles(
-    [XFile(file.path, mimeType: 'image/png')],
+    [
+      XFile(
+        file.path,
+        mimeType: asDocument ? 'application/octet-stream' : 'image/png',
+      ),
+    ],
     subject: subject,
   );
 }
