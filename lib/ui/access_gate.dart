@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../domain/access_code.dart';
+import 'contact.dart';
 
 /// حالة الفتح داخل الذاكرة: تبقى مفتوحة [sessionLength] بعد إدخال الكود الصحيح،
 /// وبعد [maxFailures] محاولات خاطئة يُمنع الإدخال [blockLength].
@@ -51,6 +53,80 @@ class AccessGate {
   }
 }
 
+class _ContactNotice extends StatefulWidget {
+  const _ContactNotice();
+
+  @override
+  State<_ContactNotice> createState() => _ContactNoticeState();
+}
+
+class _ContactNoticeState extends State<_ContactNotice> {
+  bool _copied = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = scheme.onPrimaryContainer;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: fg),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  kContactNotice,
+                  style: TextStyle(color: fg, height: 1.4),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.phone, size: 18, color: fg),
+                    const SizedBox(width: 6),
+                    SelectableText(
+                      kContactPhone,
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(
+                        color: fg,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'نسخ الرقم',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        _copied ? Icons.check : Icons.copy,
+                        size: 18,
+                        color: fg,
+                      ),
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          const ClipboardData(text: kContactPhone),
+                        );
+                        if (mounted) setState(() => _copied = true);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CodeDialog extends StatefulWidget {
   const _CodeDialog();
 
@@ -98,25 +174,29 @@ class _CodeDialogState extends State<_CodeDialog> {
           Text('شاشة محمية'),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('أدخل الكود للمتابعة.'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              labelText: 'الكود',
-              errorText: _error,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('أدخل الكود للمتابعة.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                labelText: 'الكود',
+                errorText: _error,
+              ),
+              onSubmitted: (_) => _submit(),
             ),
-            onSubmitted: (_) => _submit(),
-          ),
-        ],
+            const SizedBox(height: 16),
+            const _ContactNotice(),
+          ],
+        ),
       ),
       actions: [
         TextButton(

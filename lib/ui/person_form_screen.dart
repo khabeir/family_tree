@@ -4,6 +4,7 @@ import '../app_state.dart';
 import '../core/arabic_text.dart';
 import '../data/models/person.dart';
 import '../domain/family_service.dart';
+import 'access_gate.dart';
 import 'person_picker_screen.dart';
 import 'ui_helpers.dart';
 
@@ -153,6 +154,11 @@ class _PersonFormScreenState extends State<PersonFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final form = _buildForm(context);
+    return widget.person == null ? Gated(child: form) : form;
+  }
+
+  Widget _buildForm(BuildContext context) {
     final isEdit = widget.person != null;
     final preview = widget.state
         .composeName(_name.text, _fatherId, selfId: widget.person?.id);
