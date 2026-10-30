@@ -13,41 +13,40 @@ String exportDateText([DateTime? now]) {
   return 'تاريخ التصدير: ${n.year}-${t(n.month)}-${t(n.day)}';
 }
 
-/// شريط الحقوق السفلي للخريطة المصدَّرة: سطر الحقوق ثم تاريخ التصدير
-/// (أزرق بنص أبيض، ويتقلّص النص إن ضاق العرض).
-Widget buildCreditBar({double height = 58, DateTime? now}) {
+/// شريط رفيع بسطر واحد أسفل الخريطة المصدَّرة:
+/// الحقوق عند أقصى اليمين (بداية السطر في العربية) والتاريخ عند أقصى اليسار.
+Widget buildCreditBar({double height = 32, DateTime? now}) {
   return Container(
     height: height,
-    alignment: Alignment.center,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
     color: Colors.blue.shade700,
-    child: FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            kCreditText,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              inherit: false,
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: Row(
+      children: [
+        const Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              kCreditText,
+              style: TextStyle(
+                inherit: false,
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            exportDateText(now),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              inherit: false,
-              color: Colors.white,
-              fontSize: 12,
-            ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          exportDateText(now),
+          style: const TextStyle(
+            inherit: false,
+            color: Colors.white,
+            fontSize: 12,
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

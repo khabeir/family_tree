@@ -391,40 +391,30 @@ class PersonCard extends StatelessWidget {
               ),
             ),
             Container(
-              color: accent.shade50,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: accent.shade700,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Row(
                 children: [
-                  Icon(Icons.account_tree, size: 16, color: accent.shade700),
-                  const SizedBox(width: 6),
-                  Text(
-                    'شجرة عائلتي',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: accent.shade800,
+                  const Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        kCreditText,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 10),
                   Text(
-                    'التاريخ: ' + _today(),
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    'تاريخ التصدير: ' + _today(),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ],
-              ),
-            ),
-            Container(
-              color: accent.shade700,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: const Center(
-                child: Text(
-                  kCreditText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ),
             ),
           ],
