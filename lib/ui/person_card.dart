@@ -406,7 +406,7 @@ class PersonCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    _today(),
+                    'التاريخ: ' + _today(),
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ],

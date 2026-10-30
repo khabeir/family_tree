@@ -11,4 +11,9 @@ void main() {
       greaterThan(kCreditText.indexOf('محمد برير حبيب الله')),
     );
   });
+
+  test('تاريخ التصدير بصيغة yyyy-MM-dd مع أصفار بادئة', () {
+    expect(exportDateText(DateTime(2026, 10, 30)), 'تاريخ التصدير: 2026-10-30');
+    expect(exportDateText(DateTime(2026, 1, 5)), 'تاريخ التصدير: 2026-01-05');
+  });
 }

@@ -695,7 +695,7 @@ class _MindMapScreenState extends State<MindMapScreen> {
           acc += w + gapX;
         }
         final canvasW = math.max((acc - gapX) + pad * 2, _exporting ? 380.0 : 0.0);
-        final footerH = _exporting ? 40.0 : 0.0;
+        final footerH = _exporting ? 58.0 : 0.0;
         final canvasH = layout.height + pad * 2 + footerH;
 
         final effRects = <Rect>[];
