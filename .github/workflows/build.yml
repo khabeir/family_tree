@@ -43,24 +43,10 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-flutter-
 
-      - name: Gradle network resilience (mirrors, timeouts, retries)
+      - name: Gradle network settings (timeouts and retries only)
         run: |
-          mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/mirrors.gradle <<'GRADLE_EOF'
-          // مستودعات بديلة تُجرَّب بعد المستودعات الأصلية إن تعذّر حلّ اعتماد
-          allprojects {
-              buildscript {
-                  repositories {
-                      maven { url = uri('https://maven-central.storage-download.googleapis.com/maven2/') }
-                      maven { url = uri('https://repo1.maven.org/maven2/') }
-                  }
-              }
-              repositories {
-                  maven { url = uri('https://maven-central.storage-download.googleapis.com/maven2/') }
-                  maven { url = uri('https://repo1.maven.org/maven2/') }
-              }
-          }
-          GRADLE_EOF
+          rm -f ~/.gradle/init.d/mirrors.gradle
+          mkdir -p ~/.gradle
           cat >> ~/.gradle/gradle.properties <<'PROPS_EOF'
           systemProp.org.gradle.internal.http.connectionTimeout=120000
           systemProp.org.gradle.internal.http.socketTimeout=120000
