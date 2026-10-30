@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../data/models/person.dart';
+import 'access_gate.dart';
 import 'backup_screen.dart';
 import 'import_screen.dart';
 import 'person_detail_screen.dart';
@@ -123,14 +124,14 @@ class _PersonListScreenState extends State<PersonListScreen> {
             tooltip: 'استيراد Excel / CSV',
             icon: const Icon(Icons.table_chart),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => ImportScreen(state: state)),
+              MaterialPageRoute(builder: (_) => Gated(child: ImportScreen(state: state))),
             ),
           ),
           IconButton(
             tooltip: 'النسخ الاحتياطي والبيانات',
             icon: const Icon(Icons.save_alt),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => BackupScreen(state: state)),
+              MaterialPageRoute(builder: (_) => Gated(child: BackupScreen(state: state))),
             ),
           ),
         ],
