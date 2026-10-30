@@ -17,6 +17,7 @@ import '../domain/family_tree_index.dart';
 import '../domain/mind_map.dart';
 import 'person_detail_screen.dart';
 import 'person_picker_screen.dart';
+import 'branding.dart';
 import 'image_export.dart';
 import 'ui_helpers.dart';
 
@@ -104,6 +105,7 @@ class _MindMapScreenState extends State<MindMapScreen> {
   String? _highlightKey;
   String? _focusKey;
   Size? _lastViewport;
+  bool _exporting = false;
   ImageQuality _quality = ImageQuality.fhd;
   _ViewRequest _view = _ViewRequest.reset;
 
@@ -360,15 +362,22 @@ class _MindMapScreenState extends State<MindMapScreen> {
 
   /// يلتقط الخريطة كاملة (لا المنطقة الظاهرة فقط) بخلفية بيضاء.
   Future<Uint8List> _capturePng() async {
-    final ctx = _canvasKey.currentContext;
-    if (ctx == null) throw StateError('الخريطة غير جاهزة بعد');
-    final boundary = ctx.findRenderObject() as RenderRepaintBoundary;
-    final ratio = _quality.ratioFor(boundary.size);
-    final image = await boundary.toImage(pixelRatio: ratio);
-    final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    if (data == null) throw StateError('فشل إنشاء الصورة');
-    return data.buffer.asUint8List();
+    // يظهر شريط حقوق التصميم أسفل الخريطة أثناء الالتقاط فقط
+    setState(() => _exporting = true);
+    try {
+      await WidgetsBinding.instance.endOfFrame;
+      final ctx = _canvasKey.currentContext;
+      if (ctx == null) throw StateError('الخريطة غير جاهزة بعد');
+      final boundary = ctx.findRenderObject() as RenderRepaintBoundary;
+      final ratio = _quality.ratioFor(boundary.size);
+      final image = await boundary.toImage(pixelRatio: ratio);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (data == null) throw StateError('فشل إنشاء الصورة');
+      return data.buffer.asUint8List();
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
   }
 
   /// حفظ الصورة في الجهاز: يفتح نافذة النظام لاختيار المجلد والاسم.
@@ -685,8 +694,9 @@ class _MindMapScreenState extends State<MindMapScreen> {
           off.add(acc);
           acc += w + gapX;
         }
-        final canvasW = (acc - gapX) + pad * 2;
-        final canvasH = layout.height + pad * 2;
+        final canvasW = math.max((acc - gapX) + pad * 2, _exporting ? 340.0 : 0.0);
+        final footerH = _exporting ? 40.0 : 0.0;
+        final canvasH = layout.height + pad * 2 + footerH;
 
         final effRects = <Rect>[];
         for (var i = 0; i < layout.boxes.length; i++) {
@@ -782,6 +792,14 @@ class _MindMapScreenState extends State<MindMapScreen> {
                             size: sizes[i],
                             eff: effRects[i],
                             style: styles[i],
+                          ),
+                        if (_exporting)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: footerH,
+                            child: buildCreditBar(height: footerH),
                           ),
                       ],
                     ),

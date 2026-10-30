@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../data/models/person.dart';
 import '../domain/relations.dart';
+import 'branding.dart';
 import 'ui_helpers.dart';
 
 /// أقسام البطاقة التي يمكن إظهارها أو إخفاؤها.
@@ -409,6 +410,21 @@ class PersonCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ],
+              ),
+            ),
+            Container(
+              color: accent.shade700,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: const Center(
+                child: Text(
+                  kCreditText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ],
