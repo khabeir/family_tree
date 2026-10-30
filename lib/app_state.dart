@@ -83,14 +83,20 @@ class AppState extends ChangeNotifier {
     final list =
         _all.where((p) => p.fatherId == id || p.motherId == id).toList();
     list.sort((a, b) {
-      final x = a.birthDate;
-      final y = b.birthDate;
-      if (x != null && y != null && x != y) return x.compareTo(y);
-      if (x != null && y == null) return -1;
-      if (x == null && y != null) return 1;
-      return a.id!.compareTo(b.id!);
+      final c = a.sortOrder.compareTo(b.sortOrder);
+      return c != 0 ? c : a.id!.compareTo(b.id!);
     });
     return list;
+  }
+
+  /// يحرّك الابن [childId] خطوة ضمن أبناء [parentId]: [delta] = -1 للأعلى، +1 للأسفل.
+  Future<void> moveChild(int parentId, int childId, int delta) async {
+    final list = childrenOf(parentId);
+    final i = list.indexWhere((c) => c.id == childId);
+    final j = i + delta;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    await persons.swapSortOrder(list[i].id!, list[j].id!);
+    await load();
   }
 
   String? parentsLabel(Person p) {

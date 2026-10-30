@@ -46,7 +46,7 @@ class MindMapBuilder {
       (_marriagesOf[m.person2Id] ??= []).add(m);
     }
     for (final l in _kids.values) {
-      l.sort((a, b) => a.id!.compareTo(b.id!));
+      l.sort((a, b) { final c = a.sortOrder.compareTo(b.sortOrder); return c != 0 ? c : a.id!.compareTo(b.id!); });
     }
     for (final l in _marriagesOf.values) {
       l.sort((a, b) => a.id!.compareTo(b.id!));

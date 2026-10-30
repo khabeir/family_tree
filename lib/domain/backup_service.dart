@@ -62,6 +62,7 @@ class BackupService {
         );
       }
       await batch.commit(noResult: true);
+      await txn.rawUpdate('UPDATE persons SET sort_order = id + (SELECT COALESCE(MAX(sort_order), 0) FROM persons) WHERE sort_order = 0');
     });
   }
 }

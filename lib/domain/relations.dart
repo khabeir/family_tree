@@ -26,7 +26,9 @@ List<Sibling> siblingsOf(List<Person> all, Person p) {
   }
   result.sort((a, b) {
     final k = a.kind.index.compareTo(b.kind.index);
-    return k != 0 ? k : a.person.id!.compareTo(b.person.id!);
+    if (k != 0) return k;
+    final s = a.person.sortOrder.compareTo(b.person.sortOrder);
+    return s != 0 ? s : a.person.id!.compareTo(b.person.id!);
   });
   return result;
 }

@@ -37,7 +37,7 @@ class FamilyTreeIndex {
       }
     }
     for (final list in _children.values) {
-      list.sort((a, b) => a.id!.compareTo(b.id!));
+      list.sort((a, b) { final c = a.sortOrder.compareTo(b.sortOrder); return c != 0 ? c : a.id!.compareTo(b.id!); });
     }
   }
 

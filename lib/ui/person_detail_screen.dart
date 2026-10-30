@@ -426,7 +426,8 @@ class PersonDetailScreen extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       title: Text('لا يوجد أبناء مسجلون'),
                     ),
-                  for (final c in children) _personTile(context, c),
+                  for (var i = 0; i < children.length; i++)
+                    _childTile(context, p, children, i),
                 ],
               ),
               if (siblings.isNotEmpty)
@@ -457,6 +458,47 @@ class PersonDetailScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// ابن مع أسهم تحريك للأعلى/الأسفل (الأكبر سناً في الأعلى).
+  Widget _childTile(
+    BuildContext context,
+    Person parent,
+    List<Person> kids,
+    int i,
+  ) {
+    final c = kids[i];
+    final canReorder = kids.length > 1;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: PersonAvatar(gender: c.gender),
+      title: Text(state.displayName(c)),
+      subtitle: canReorder
+          ? Text('الترتيب: ' + (i + 1).toString() + ' من ' + kids.length.toString())
+          : null,
+      onTap: () => _open(context, c.id!),
+      trailing: canReorder
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'تحريك للأعلى',
+                  icon: const Icon(Icons.arrow_upward),
+                  onPressed: i == 0
+                      ? null
+                      : () => state.moveChild(parent.id!, c.id!, -1),
+                ),
+                IconButton(
+                  tooltip: 'تحريك للأسفل',
+                  icon: const Icon(Icons.arrow_downward),
+                  onPressed: i == kids.length - 1
+                      ? null
+                      : () => state.moveChild(parent.id!, c.id!, 1),
+                ),
+              ],
+            )
+          : const Icon(Icons.chevron_left),
     );
   }
 

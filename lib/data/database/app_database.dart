@@ -10,7 +10,7 @@ class AppDatabase {
 
   static const String fileName = 'family_tree.db';
 
-  static final List<Migration> migrations = [_v1];
+  static final List<Migration> migrations = [_v1, _v2];
 
   static int get currentVersion => migrations.length;
 
@@ -34,6 +34,15 @@ class AppDatabase {
     for (var v = from; v < to; v++) {
       await migrations[v](db);
     }
+  }
+
+  static Future<void> _v2(Database db) async {
+    // ترتيب الأبناء: القيمة الأولية = المعرّف أي ترتيب الإدخال الحالي
+    await db.execute(
+      'ALTER TABLE persons ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute('UPDATE persons SET sort_order = id');
+    await db.execute('CREATE INDEX idx_persons_sort ON persons(sort_order)');
   }
 
   static Future<void> _v1(Database db) async {

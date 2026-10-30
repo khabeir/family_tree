@@ -21,6 +21,7 @@ class Person {
     this.birthDate,
     this.deathDate,
     this.notes,
+    this.sortOrder = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -35,6 +36,9 @@ class Person {
   final String? birthDate;
   final String? deathDate;
   final String? notes;
+
+  /// ترتيب الظهور بين الإخوة (الأصغر أولاً). 0 = لم يُعيَّن بعد (يُعيَّن عند الحفظ).
+  final int sortOrder;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -47,6 +51,7 @@ class Person {
     Object? birthDate = _unset,
     Object? deathDate = _unset,
     Object? notes = _unset,
+    int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -61,6 +66,7 @@ class Person {
       deathDate:
           identical(deathDate, _unset) ? this.deathDate : deathDate as String?,
       notes: identical(notes, _unset) ? this.notes : notes as String?,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -75,6 +81,7 @@ class Person {
         'birth_date': birthDate,
         'death_date': deathDate,
         'notes': notes,
+        'sort_order': sortOrder,
         'created_at': createdAt?.toUtc().toIso8601String(),
         'updated_at': updatedAt?.toUtc().toIso8601String(),
       };
@@ -88,6 +95,7 @@ class Person {
         birthDate: map['birth_date'] as String?,
         deathDate: map['death_date'] as String?,
         notes: map['notes'] as String?,
+        sortOrder: map['sort_order'] is int ? map['sort_order'] as int : 0,
         createdAt: DateTime.tryParse((map['created_at'] as String?) ?? ''),
         updatedAt: DateTime.tryParse((map['updated_at'] as String?) ?? ''),
       );

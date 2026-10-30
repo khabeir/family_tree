@@ -69,6 +69,7 @@ class ImportService {
           'updated_at': now,
         });
       }
+      await txn.rawUpdate('UPDATE persons SET sort_order = id + (SELECT COALESCE(MAX(sort_order), 0) FROM persons) WHERE sort_order = 0');
     });
     return ImportResult(indices.length, pairs.length);
   }
