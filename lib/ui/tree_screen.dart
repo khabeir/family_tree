@@ -94,7 +94,7 @@ class _TreeScreenState extends State<TreeScreen> {
             Expanded(
               child: Text(
                 state.displayName(p),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: r.isMatch
                     ? TextStyle(
