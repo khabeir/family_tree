@@ -85,7 +85,7 @@ jobs:
       - name: Build APK (up to 3 attempts)
         run: |
           for i in 1 2 3; do
-            if flutter build apk --release --build-number=${{ github.run_number }}; then
+            if flutter build apk --release --build-number=${{ github.run_number }} --dart-define=BUILD_NUMBER=${{ github.run_number }}; then
               exit 0
             fi
             echo "Build attempt $i failed; retrying in 20s..."
